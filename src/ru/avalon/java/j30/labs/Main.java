@@ -1,6 +1,13 @@
 package ru.avalon.java.j30.labs;
 
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Reader;
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Properties;
@@ -15,6 +22,10 @@ import java.util.Properties;
  * @author Daniel Alpatov <danial.alpatov@gmail.com>
  */
 public class Main {
+    
+    private static final String URL = "jdbc:derby://localhost:1527/Sample";
+    
+    private static Properties properties;
 
     /**
      * Точка входа в приложение
@@ -59,7 +70,7 @@ public class Main {
         /*
          * TODO #02 Реализуйте метод getUrl
          */
-        throw new UnsupportedOperationException("Not implemented yet!");
+        return URL;
     }
     /**
      * Возвращает параметры соединения
@@ -71,7 +82,13 @@ public class Main {
         /*
          * TODO #03 Реализуйте метод getProperties
          */
-        throw new UnsupportedOperationException("Not implemented yet!");
+        properties  = new Properties();
+        try (InputStream in = ClassLoader.getSystemResourceAsStream("properties/data.properties")){
+            properties.load(in);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } 
+        return properties;
     }
     /**
      * Возвращает соединение с базой данных Sample
@@ -83,7 +100,10 @@ public class Main {
         /*
          * TODO #04 Реализуйте метод getConnection
          */
-        throw new UnsupportedOperationException("Not implemented yet!");
+        String user = properties.getProperty("user");
+        String password = properties.getProperty("password");
+        
+        return DriverManager.getConnection(getUrl(), user, password);
     }
     
 }
