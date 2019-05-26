@@ -1,10 +1,13 @@
 package ru.avalon.java.j30.labs;
 
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Collection;
+import java.util.LinkedList;
 
 /**
  * Класс описывает представление о коде товара и отражает соответствующую 
@@ -25,6 +28,12 @@ public class ProductCode {
      * Описание
      */
     private String description;
+    /**
+     * Коллекция объектов {@link ProductCode}
+     */
+    private static Collection<ProductCode> products;
+    
+    private static PreparedStatement pst;
     /**
      * Основной конструктор типа {@link ProductCode}
      * 
@@ -47,7 +56,13 @@ public class ProductCode {
         /*
          * TODO #05 реализуйте конструктор класса ProductCode
          */
-        throw new UnsupportedOperationException("Not implemented yet!");        
+        try {
+            code = set.getString("prod_code");
+            discountCode = (char)set.getByte("discount_code");
+            description = set.getString("description");
+        } catch (SQLException e){
+            e.printStackTrace(System.err);
+        }
     }
     /**
      * Возвращает код товара
@@ -108,7 +123,7 @@ public class ProductCode {
         /*
          * TODO #06 Реализуйте метод hashCode
          */
-        throw new UnsupportedOperationException("Not implemented yet!");
+        return Object.hash(code, discountCode, description);
     }
     /**
      * Сравнивает некоторый произвольный объект с текущим объектом типа 
@@ -123,7 +138,8 @@ public class ProductCode {
         /*
          * TODO #07 Реализуйте метод equals
          */
-        throw new UnsupportedOperationException("Not implemented yet!");
+        return obj instanceof ProductCode &&
+                obj.hashCode()==hashCode();
     }
     /**
      * Возвращает строковое представление кода товара.
@@ -135,7 +151,10 @@ public class ProductCode {
         /*
          * TODO #08 Реализуйте метод toString
          */
-        throw new UnsupportedOperationException("Not implemented yet!");
+        String result = "Код товара: " + code + ", " +
+                        "код скидки: " + discountCode + ", " +
+                         "описание: " + description;
+        return result;
     }
     /**
      * Возвращает запрос на выбор всех записей из таблицы PRODUCT_CODE 
@@ -148,7 +167,8 @@ public class ProductCode {
         /*
          * TODO #09 Реализуйте метод getSelectQuery
          */
-        throw new UnsupportedOperationException("Not implemented yet!");
+        pst = connection.prepareStatement("SELECT * FROM product_code");
+        return pst;
     }
     /**
      * Возвращает запрос на добавление записи в таблицу PRODUCT_CODE 
@@ -161,7 +181,9 @@ public class ProductCode {
         /*
          * TODO #10 Реализуйте метод getInsertQuery
          */
-        throw new UnsupportedOperationException("Not implemented yet!");
+        pst = connection.prepareStatement("INSERT INTO product_code (prod_code, discount_code, descripton)" 
+                + "VALUES(?, ?, ?)");
+        return pst;
     }
     /**
      * Возвращает запрос на обновление значений записи в таблице PRODUCT_CODE 
@@ -174,7 +196,9 @@ public class ProductCode {
         /*
          * TODO #11 Реализуйте метод getUpdateQuery
          */
-        throw new UnsupportedOperationException("Not implemented yet!");
+        pst = connection.prepareStatement(
+                "UPDATE product_code SET discount_code=?, description=? WHERE prod_code=?");
+        return pst;
     }
     /**
      * Преобразует {@link ResultSet} в коллекцию объектов типа {@link ProductCode}
@@ -188,7 +212,13 @@ public class ProductCode {
         /*
          * TODO #12 Реализуйте метод convert
          */
-        throw new UnsupportedOperationException("Not implemented yet!");
+        products = new LinkedList<ProductCode>();
+        if(set.first()){
+            while(set.next()){
+                products.add(new ProductCode(set));
+            }
+        }
+        return products;
     }
     /**
      * Сохраняет текущий объект в базе данных. 
@@ -201,9 +231,30 @@ public class ProductCode {
      */
     public void save(Connection connection) throws SQLException {
         /*
-         * TODO #13 Реализуйте метод convert
+         * TODO #13 Реализуйте метод save
          */
-        throw new UnsupportedOperationException("Not implemented yet!");
+        pst = getSelectQuery(connection);
+        ResultSet selected = pst.executeQuery();
+        String s;
+        boolean b = false;
+        while(selected.next()){
+            s = selected.getString(1);
+            if (s.equalsIgnoreCase(code)) {
+                PreparedStatement update = getUpdateQuery(connection);
+                update.setString(1, String.valueOf(discountCode));
+                update.setString(2, description);
+                update.setString(3, code);
+                update.executeQuery();
+                b = true;
+            }
+        }
+        if(!b){
+            PreparedStatement insert = getInsertQuery(connection);
+            insert.setString(1, code);
+            insert.setString(2, String.valueOf(discountCode));
+            insert.setString(3, description);
+            insert.executeQuery();
+        }   
     }
     /**
      * Возвращает все записи таблицы PRODUCT_CODE в виде коллекции объектов
